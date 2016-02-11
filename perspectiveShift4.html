@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>GRCD Perspective Shift</title>
+  <meta charset="utf-8">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  <style>
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #work {
+  	position: fixed;
+  	background-color: #ffffff;
+  	padding: 20px;
+  	top: 50%;
+  	left: 50%;
+
+
+  }
+
+
+  </style>
+</head>
+<body style="margin: 0;">
+
+  <script src="js/three.min.js"></script>
+  <script src="js/Tween.js"></script>
+  <script src="js/OBJLoader.js"></script>
+
+  <script>
+    //Letter Paths Json
+    var letterforms = [
+      //G
+      {"src": "models/g/g1.obj", "name": "g1"},
+      {"src": "models/g/g2.obj", "name": "g2"},
+      {"src": "models/g/g3.obj", "name": "g3"},
+      {"src": "models/g/g4.obj", "name": "g4"},
+      {"src": "models/g/g5.obj", "name": "g5"},
+      {"src": "models/g/g6.obj", "name": "g6"},
+      {"src": "models/g/g7.obj", "name": "g7"},
+      {"src": "models/g/grod1.obj", "name": "grod1"},
+      {"src": "models/g/grod2.obj", "name": "grod2"},
+      {"src": "models/g/gball1.obj", "name": "gball1"},
+      {"src": "models/g/gball2.obj", "name": "gball2"},
+      {"src": "models/g/gball3.obj", "name": "gball3"},
+
+      //R
+      {"src": "models/r/r1.obj", "name": "r1"},
+      {"src": "models/r/r2.obj", "name": "r2"},
+      {"src": "models/r/r3.obj", "name": "r3"},
+      {"src": "models/r/r4.obj", "name": "r4"},
+      {"src": "models/r/r5.obj", "name": "r5"},
+      {"src": "models/r/r6.obj", "name": "r6"},
+      {"src": "models/r/r7.obj", "name": "r7"},
+      {"src": "models/r/r8.obj", "name": "r8"},
+      {"src": "models/r/r9.obj", "name": "r9"},
+
+      //C
+      {"src": "models/c/c1.obj", "name": "c1"},
+      {"src": "models/c/c2.obj", "name": "c2"},
+      {"src": "models/c/c3.obj", "name": "c3"},
+      {"src": "models/c/c4.obj", "name": "c4"},
+      {"src": "models/c/c5.obj", "name": "c5"},
+      {"src": "models/c/cball1.obj", "name": "cball1"},
+      {"src": "models/c/cball2.obj", "name": "cball2"},
+      {"src": "models/c/crod1.obj", "name": "crod1"},
+      {"src": "models/c/crod2.obj", "name": "crod2"},
+
+      //D
+      {"src": "models/d/d1.obj", "name": "d1"},
+      {"src": "models/d/d2.obj", "name": "d2"},
+      {"src": "models/d/d3.obj", "name": "d3"},
+      {"src": "models/d/d4.obj", "name": "d4"},
+      {"src": "models/d/dball1.obj", "name": "dball1"},
+      {"src": "models/d/dball2.obj", "name": "dball2"},
+      {"src": "models/d/drod1.obj", "name": "drod1"}
+
+    ];
+
+    // Set up the scene, camera, and renderer as global variables.
+    var renderer,
+    raycaster,
+    mouse,
+    scene,
+    camera;
+
+    var startLooking = false;
+
+    init();
+    animate();
+
+    //Mouse default
+    var mouseX = 0, mouseY = 0;
+
+    var windowHalfX = window.innerWidth / 2;
+    var windowHalfY = window.innerHeight / 2;
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    // Sets up the scene.
+    function init() {
+
+      // Create the scene and set the scene size.
+      scene = new THREE.Scene();
+      var WIDTH = window.innerWidth,
+          HEIGHT = window.innerHeight;
+
+
+      // Create a renderer and add it to the DOM.
+      renderer = new THREE.WebGLRenderer({antialias:true, alpha: true});
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize(WIDTH, HEIGHT);
+      document.body.appendChild(renderer.domElement);
+
+      renderer.setClearColor( 0xffffff, 1);
+
+      // Create a camera, zoom it out from the model a bit, and add it to the scene.
+      camera = new THREE.PerspectiveCamera(25, WIDTH / HEIGHT, 0.1, 20000);
+      camera.position.set(0,0,-1000);
+      scene.add(camera);
+
+      // Create an event listener that resizes the renderer with the browser window.
+      window.addEventListener('resize', function() {
+        var WIDTH = window.innerWidth,
+            HEIGHT = window.innerHeight;
+        renderer.setSize(WIDTH, HEIGHT);
+        camera.aspect = WIDTH / HEIGHT;
+        camera.updateProjectionMatrix();
+      });
+
+      //Add a light
+      var light = new THREE.HemisphereLight( 0xffffff, 0x000000, 0.8 ); 
+      scene.add( light );
+
+	  //define material
+	  var material = new THREE.MeshPhongMaterial({color: 0xffffff, shading: THREE.FlatShading });
+    var materialSelected = new THREE.MeshPhongMaterial({color: 0xff0000, shading: THREE.FlatShading });
+
+	  // loader
+    //var objectArray = [];
+
+	  var loader = new THREE.OBJLoader();
+    var onObject = function(object) {
+      object.traverse( function ( child ) {
+        if ( child instanceof THREE.Mesh ) {
+          child.material = material;
+        }
+
+      });
+
+    //All object properties
+     object.scale.x = .5;
+     object.scale.y = .5;
+     object.scale.z = .5;
+     //object.name = "name";
+    //objectArray.push(object);
+    scene.add( object );
+
+    };
+
+    //Loop through json and load each obj
+    for (var key in letterforms) {
+      if (letterforms.hasOwnProperty(key)) {
+      loader.load(letterforms[key].src, onObject);
+      }
+    }
+
+    //For raycaster
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+
+    var cameraIn =
+
+        new TWEEN.Tween( camera.position )
+         .to({ z:3200 }, 4000)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .delay( 1000 )
+        .start()
+        .onComplete(function(){
+         //document.addEventListener( 'mousemove', onDocumentMouseMove, true );
+         startLooking = true;
+
+
+
+
+        });
+
+
+
+    }//end init
+
+    document.onkeydown = checkKey;
+
+    function checkKey(e) {
+      e = e || window.event;
+      if (e.keyCode == '39') {
+        window.location.href = 'models/present2.pdf';
+      }
+
+    }
+
+    document.addEventListener( 'mousemove', onDocumentMouseMove, true );
+
+
+    function onDocumentMouseMove( event ) {
+
+        //for camera rotation
+        mouseX = 2.5*(event.clientX - windowHalfX);
+        mouseY = 2.5*(event.clientY - windowHalfY);
+
+
+        //for raycaster. THIS IS MESSY. PLEASE FIX
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+
+
+      }
+
+    console.log(scene);
+    // Renders the scene and updates the render as needed.
+    function animate() {
+
+      requestAnimationFrame(animate);
+
+
+      raycaster.setFromCamera( mouse, camera );
+
+      var intersects = raycaster.intersectObjects( scene.children, true );
+      var materialSelected = new THREE.MeshPhongMaterial({color: 0x61A80F, shading: THREE.FlatShading });
+      var materialWireframe = new THREE.MeshPhongMaterial({ wireframe: true });
+
+      //console.log(scene.children);
+
+      for ( var i = 0; i < intersects.length; i++ ) {
+
+        //intersects[ i ].object.material = materialWireframe;
+  
+      }
+
+
+      /*
+      if (camera.position.z < 3200) {
+        camera.position.z += 30;
+      }
+      //Move apart pieces
+      
+      for (i = 2; i < scene.children.length; i++) {
+        if (i % 2 == 0){
+          scene.children[i].position.z += .6;
+          //console.log(scene.children[i].position.z);
+        } else {
+          scene.children[i].position.z += .6;
+        }
+      }
+      */
+
+
+      if (startLooking == true) {
+        camera.position.x += ( mouseX - camera.position.x ) * 0.036;
+        camera.position.y += ( - (mouseY) - camera.position.y ) * 0.036;
+        var totalMouse = -((Math.abs(mouseX)+Math.abs(mouseY))/2)+3200;
+        camera.position.z += ( totalMouse - camera.position.z ) * 0.036;
+        camera.lookAt( scene.position );
+      }
+      TWEEN.update();
+
+      // Render the scene.
+      renderer.render(scene, camera);
+
+
+
+    }
+
+  </script>
+
+  <!--<button id="work">View our work</button>-->
+
+</body>
+</html>
